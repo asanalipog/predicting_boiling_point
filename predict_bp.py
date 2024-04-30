@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-
-#################################################################################################
-# Import module
-#################################################################################################
 
 import sys
 sys.path.append('..')  # to import from GP.kernels and property_predition.data_utils
@@ -23,13 +18,9 @@ from rdkit.Chem import AllChem
 from GP.kernels import Tanimoto
 from property_prediction.data_utils import transform_data, TaskDataLoader, featurise_mols
 
-#################################################################################################
-# Main function
-#################################################################################################
 
 def main():
 
-    # Load learning sets
     data_loader = TaskDataLoader('bp', 'alkene.csv')
     smiles_list, y1 = data_loader.load_property_data()
     X = featurise_mols(smiles_list, 'fingerprints')
@@ -37,12 +28,11 @@ def main():
     X = X.astype(np.float64)
     y = y1.reshape(-1, 1)
     
-    # Function to minimize in prior optimization
+
     m1 = None
     def objective_closure():
         return -m1.log_marginal_likelihood()
     
-    # Separate test & train set in given data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     y_train = y_train.reshape(-1, 1)
     y_test = y_test.reshape(-1, 1)
@@ -50,22 +40,21 @@ def main():
     X_train = X_train.astype(np.float64)
     X_test = X_test.astype(np.float64)
     
-    # Select kernel and generate model object
     k = Tanimoto()
     m1 = gpflow.models.GPR(data=(X_train, y_train), mean_function=Constant(np.mean(y_train)), kernel=k, noise_variance=1)
     
-    # Optimize with Scipy
+
     opt = gpflow.optimizers.Scipy()
     opt.minimize(objective_closure, m1.trainable_variables, options=dict(maxiter=1000))
-    print_summary(m1)  # Model summary
+    print_summary(m1)
     
-    # Calculate test set properties
+
     y_pred, y_var = m1.predict_f(X_test)
 
     y_pred = y_scaler.inverse_transform(y_pred)
     y_test = y_scaler.inverse_transform(y_test)
 
-    ## Compute R^2, RMSE and MAE on test set molecules
+
     score = r2_score(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     mae = mean_absolute_error(y_test, y_pred)
@@ -74,17 +63,11 @@ def main():
     print("RMSE: {:.3f}".format(rmse))
     print("MAE: {:.3f}".format(mae))
     
-    ###################################
-    ######## Change this part #########
-    ###################################
-    
-    # write a code to predict molecular property of 'X' from model 'm1' 
 
    
     #X_test = X_test.astype(np.float64) need to do that
- 
     #print(m1.predict_f("CCC(C)CC"))
-    ###################################
+
     my_list = ['CCC(C)CC', 'CCC(C)CC(C)CC', 'CC(C)CC']
     my_train = featurise_mols(my_list, 'fingerprints')
     my_train = my_train.astype(np.float64)
@@ -92,9 +75,6 @@ def main():
     my_pred = y_scaler.inverse_transform(my_pred)
     print(my_pred)
 
-#################################################################################################
-# Why python using this? :P
-#################################################################################################
 
 if __name__ == "__main__":
     main()
