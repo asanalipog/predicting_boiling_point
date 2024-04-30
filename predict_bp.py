@@ -67,8 +67,10 @@ def main():
    
     #X_test = X_test.astype(np.float64) need to do that
     #print(m1.predict_f("CCC(C)CC"))
-
+    #################################################
+    #change "my_list" with your own molecules
     my_list = ['CCC(C)CC', 'CCC(C)CC(C)CC', 'CC(C)CC']
+    #################################################
     my_train = featurise_mols(my_list, 'fingerprints')
     my_train = my_train.astype(np.float64)
     my_pred, my_var = m1.predict_f(my_train)
